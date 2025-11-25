@@ -30,7 +30,7 @@ The project utilizes the following technologies:
 * **Frontend:** HTML5, CSS3, JavaScript  
 * **Backend:** Node.js  
 * **Database:** MySQL  
-* **API:** YouTube Music API / YouTube Data API v3  
+* **API:** Music API
 * **Version Control:** Git & GitHub  
 * **Development Tools:** Visual Studio
 

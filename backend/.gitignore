@@ -1,2 +1,5 @@
 node_modules/
 build/
+#.env files
+.env.local
+.env.*.local

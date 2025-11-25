@@ -1,16 +1,145 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>vibeBox</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="vbheader">
-        <h1>vibeBox</h1>
-        <p>Your personal music companion</p>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VibeBox - Modern Music Player</title>
+    
+    <!-- Favicon - Prevents 404 error -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>" />
+    
+    <link rel="stylesheet" href="/assets/css/style.css" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- Search Results Placeholder -->
+    
 
+    <header class="vbheader" role="banner">
+      <div class="app_name">
+        <h1>VibeBox</h1>
+      </div>
+
+      <!-- Search bar area -->
+      <div class="search-bar">
+        <form id="searchForm" role="search">
+          <label for="search" class="sr-only"
+            >Search songs, artists or mood</label
+          >
+          <input
+            type="search"
+            name="song_search"
+            id="search"
+            placeholder="Search song, artist or mood..."
+          />
+        </form>
+      </div>
+
+      <div class="dark-mode">
+        <label class="switch">
+          <input
+            type="checkbox"
+            id="darkModeToggle"
+            aria-label="Toggle dark mode"
+            checked
+          />
+          <span class="slider round" aria-hidden="true"></span>
+        </label>
+      </div>
+    </header>
+
+    <!-- Weather & Vibe Recommendation Section -->
+    <div id="weatherSection" class="weather-section" aria-label="Weather and Vibe Recommendation">
+      <div class="weather-card">
+        <div class="weather-info">
+          <div id="weatherIcon" class="weather-icon">
+            <i data-lucide="cloud" style="width: 32px; height: 32px;"></i>
+          </div>
+          <div class="weather-details">
+            <p id="weatherCondition" class="weather-condition">--</p>
+            <p id="weatherTemp" class="weather-temp">-- °C</p>
+          </div>
+        </div>
+        <button id="getVibeBtn" class="get-vibe-btn" aria-label="Get weather-based vibe recommendation">
+          <i data-lucide="music" style="width: 18px; height: 18px;"></i> Get Vibe
+        </button>
+      </div>
+      <div id="vibeTag" class="vibe-tag" style="display: none;">
+        <p id="vibeSuggestion" class="vibe-suggestion"></p>
+      </div>
     </div>
-</body>
+
+    <div class="section">
+      <!-- Music Player Card -->
+      <section class="music-player" aria-label="Current Music Player">
+        <div class="song-title">
+          <h3 id="currentSongTitle">No Song Playing</h3>
+          <p id="currentSongArtist" class="song-artist">
+            Start by searching or selecting a playlist.
+          </p>
+        </div>
+
+        <div class="song_profile">
+          <img
+            id="albumCover"
+            src="https://placehold.co/380x380/222/fff?text=VIBEBOX"
+            alt="Album cover for No Song Playing"
+          />
+        </div>
+
+        <!-- Seek Bar -->
+        <div class="progress-container">
+          <span id="currentTime">0:00</span>
+          <input type="range" id="seekBar" value="0" min="0" max="100" step="1">
+          <span id="totalDuration">0:00</span>
+        </div>
+
+        <!-- Player Controls -->
+        <div class="player-controls">
+          <button
+            class="previous-btn"
+            aria-label="Previous Track"
+            title="Previous Track">
+            <i data-lucide="skip-back"></i>
+          </button>
+
+          <button
+            class="play-pause_btn"
+            aria-label="Play"
+            title="Play/Pause"
+            data-is-playing="false">
+            <i data-lucide="play-circle"></i>
+          </button>
+
+          <button class="nxt-btn" aria-label="Next Track" title="Next Track">
+            <i data-lucide="skip-forward"></i>
+          </button>
+        </div>
+      </section>
+
+      <!-- Playlists Container -->
+      <aside
+        id="playlists"
+        class="playlists-panel"
+        aria-label="My Playlists"
+        role="complementary"
+      >
+        <h2>
+          My Playlists
+          <i data-lucide="list-music" style="width: 20px; height: 20px"></i>
+        </h2>
+        <!-- Placeholder content for an empty state or sample playlist -->
+        <div id="vb_results" aria-live="polite" aria-atomic="true">
+      <div class="vb-msg">
+        Search for a song, artist, or mood to start your VibeBox experience!
+      </div>
+    </div>
+      </aside>
+    </div>
+    <script type="module" src="./assets/js/main.js"></script>
+  </body>
 </html>
