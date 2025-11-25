@@ -1,5 +1,5 @@
 // API Configuration
-const API_BASE_URL = '/api';
+const API_BASE_URL = 'https://vibebox-backend-oadg821tt-barnwals-projects.vercel.app/api';
 
 // Audio player instance
 let audioPlayer = null;

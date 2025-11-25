@@ -180,8 +180,8 @@ async function searchByVibe(vibe) {
   const mood = extractMoodFromVibe(vibe);
 
   try {
-    const response = await fetch(`/api/tracks/mood/${mood}`);
-    const tracks = await response.json();
+    console.log(`[Main] Searching for vibe tracks: ${mood}`);
+    const tracks = await API.getTracksByTag(mood);
 
     if (tracks.length > 0) {
       displaySearchResults(tracks);
@@ -236,8 +236,7 @@ async function handleSearch(e) {
   resultsContainer.innerHTML = `<div class="vb-msg">Searching for "${query}"...</div>`;
 
   try {
-    const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-    const tracks = await response.json();
+    const tracks = await API.searchTracks(query);
 
     if (!tracks || tracks.length === 0) {
       resultsContainer.innerHTML = `<div class="vb-msg">No results found for "${query}". Try another search!</div>`;
@@ -343,8 +342,7 @@ async function loadPopularTracks() {
   resultsContainer.innerHTML = `<div class="vb-msg">Loading popular tracks...</div>`;
 
   try {
-    const response = await fetch('/api/tracks/popular?limit=12');
-    const tracks = await response.json();
+    const tracks = await API.getPopularTracks(12);
 
     if (tracks.length > 0) {
       displaySearchResults(tracks);
