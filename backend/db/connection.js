@@ -8,48 +8,50 @@ const dbConfig = {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
-    
+
     // Recommended Pool Settings for Express:
     waitForConnections: true, // Wait for connections if pool is exhausted
     connectionLimit: 10,      // Maximum number of connections to create at once
     queueLimit: 0             // No limit on connection requests queue
 };
 
-// Create a connection pool: This is much more efficient and robust than single connections
+// Create a connection pool
+// Note: We don't await connection here to allow module loading even if DB is down
 const pool = mysql.createPool(dbConfig);
-
-// --- Connection Test on Module Load ---
-// This ensures your server won't start successfully if the database is unreachable
-try {
-    const connection = await pool.getConnection();
-    console.log("[DB] Successfully connected to MySQL server and connection pool established.");
-    connection.release(); // Release the test connection back to the pool
-} catch (error) {
-    console.error(`[DB ERROR] Could not connect to MySQL server. Check .env credentials.`);
-    console.error(`[DB ERROR] Error Message: ${error.message}`);
-    // Optional: Exit the process if the core database dependency fails (brutally honest approach)
-    // process.exit(1); 
-}
 
 /**
  * Executes a query against the MySQL connection pool.
  * This function is the single point of contact for all SQL operations.
- * * @param {string} sql - The SQL query string (with '?' placeholders).
- * @param {Array} [values=[]] - Values to safely escape and insert into the query (parameterization).
- * @returns {Promise<Array<object>>} The results (or affected rows/insert ID for modifications).
+ * @param {string} sql - The SQL query string (with '?' placeholders).
+ * @param {Array} [values=[]] - Values to safely escape and insert into the query.
+ * @returns {Promise<Array<object>>} The results (or affected rows/insert ID).
+ * @throws {Error} If the query fails.
  */
 export async function query(sql, values = []) {
-    // The pool.execute() method uses prepared statements (safe from SQL Injection)
-    const [results] = await pool.execute(sql, values);
-    return results;
+    try {
+        const [results] = await pool.execute(sql, values);
+        return results;
+    } catch (error) {
+        // Log error but let the caller handle it (or throw it)
+        console.error(`[DB Query Error] ${error.message}`);
+        throw error;
+    }
 }
 
 /**
  * Utility function to initialize all necessary database tables (schema).
  * This ensures the application can run even if the database is empty.
+ * @returns {Promise<boolean>} True if successful, False otherwise.
  */
 export async function initializeDatabaseSchema() {
     console.log("[DB] Checking database schema...");
+
+    // Check if we have credentials
+    if (!process.env.DB_HOST || !process.env.DB_USER) {
+        console.warn("[DB Warning] Missing DB_HOST or DB_USER. Database features (Playlists) will be disabled.");
+        return false;
+    }
+
     const createPlaylistsTableSQL = `
         CREATE TABLE IF NOT EXISTS playlists (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -60,13 +62,20 @@ export async function initializeDatabaseSchema() {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     `;
-    
+
     try {
+        // Test connection first
+        const connection = await pool.getConnection();
+        console.log("[DB] Successfully connected to MySQL server.");
+        connection.release();
+
+        // Run schema creation
         await query(createPlaylistsTableSQL);
         console.log("[DB] 'playlists' table verified/created successfully.");
+        return true;
     } catch (error) {
         console.error("[DB ERROR] Failed to initialize database schema:", error.message);
-        // Brutally honest: If schema creation fails, the application is unusable.
-        process.exit(1); 
+        console.warn("[DB Warning] Application will start without Database features.");
+        return false; // Don't crash the app
     }
 }

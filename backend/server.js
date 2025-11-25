@@ -10,6 +10,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+app.use(cors());
 const PORT = process.env.PORT || 3000;
 
 // Saavn API Configuration
@@ -300,8 +301,26 @@ app.delete('/api/playlists/:playlistId', async (req, res) => {
 const frontendPath = path.join(__dirname, '..');
 app.use(express.static(frontendPath));
 
+// Fallback for root URL if index.html is not found (or for API-only deployment)
+app.get('/', (req, res) => {
+    res.json({
+        message: "VibeBox Backend is running",
+        endpoints: {
+            search: "/api/search?q=song",
+            popular: "/api/tracks/popular",
+            mood: "/api/tracks/mood/happy"
+        },
+        frontend: "If you are looking for the app, please visit the frontend URL."
+    });
+});
+
 // --- Initialize Database Schema ---
-await initializeDatabaseSchema();
+// We await this but don't let it crash the server if it fails
+try {
+    await initializeDatabaseSchema();
+} catch (err) {
+    console.warn("[Server Warning] Database initialization failed. Continuing without DB features.");
+}
 
 // --- Server Start (only for local development) ---
 // In Vercel/serverless, we export the app instead of listening
