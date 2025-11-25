@@ -4,6 +4,7 @@ import 'dotenv/config';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { query, initializeDatabaseSchema } from './db/connection.js';
+import axios from 'axios';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,6 +14,47 @@ const PORT = process.env.PORT || 3000;
 
 // Saavn API Configuration
 const SAAVN_BASE_URL = 'https://saavn.sumit.co/api';
+
+// Configure axios with custom timeouts
+const axiosInstance = axios.create({
+    timeout: 30000,  // 30 seconds timeout
+    headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; VibeBox/1.0)'
+    }
+});
+
+/**
+ * Helper: Fetch with timeout and retry logic using axios
+ */
+async function fetchWithRetry(url, options = {}) {
+    const maxRetries = 3;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            const response = await axiosInstance.get(url);
+
+            // Convert axios response to fetch-like response object
+            return {
+                ok: response.status >= 200 && response.status < 300,
+                status: response.status,
+                json: async () => response.data
+            };
+
+        } catch (error) {
+            console.error(`[Fetch] Attempt ${attempt}/${maxRetries} failed for ${url}:`, error.message);
+
+            // If this was the last attempt, throw the error
+            if (attempt === maxRetries) {
+                throw error;
+            }
+
+            // Wait before retrying (exponential backoff)
+            const waitTime = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+            console.log(`[Fetch] Retrying in ${waitTime}ms...`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+        }
+    }
+}
 
 /**
  * Helper: Map Saavn track to VibeBox format
@@ -56,7 +98,7 @@ app.get('/api/search', async (req, res) => {
         const url = `${SAAVN_BASE_URL}/search/songs?query=${encodeURIComponent(searchQuery)}&page=1&limit=20`;
         console.log(`[Search] Calling: ${url}`);
 
-        const response = await fetch(url);
+        const response = await fetchWithRetry(url);
 
         if (!response.ok) {
             console.error('[Search] Saavn API error:', response.status);
@@ -111,7 +153,7 @@ app.get('/api/tracks/mood/:mood', async (req, res) => {
         const url = `${SAAVN_BASE_URL}/search/songs?query=${encodeURIComponent(query)}&page=1&limit=20`;
         console.log(`[Mood] Calling: ${url}`);
 
-        const response = await fetch(url);
+        const response = await fetchWithRetry(url);
 
         if (!response.ok) {
             return res.status(response.status).json({ error: 'Mood search failed' });
@@ -143,7 +185,7 @@ app.get('/api/tracks/popular', async (req, res) => {
         const url = `${SAAVN_BASE_URL}/search/songs?query=Trending%20Hindi&page=1&limit=20`;
         console.log(`[Popular] Calling: ${url}`);
 
-        const response = await fetch(url);
+        const response = await fetchWithRetry(url);
 
         if (!response.ok) {
             return res.status(response.status).json({ error: 'Popular tracks fetch failed' });
@@ -175,7 +217,7 @@ app.get('/api/track/:trackId', async (req, res) => {
     try {
         const url = `${SAAVN_BASE_URL}/songs?ids=${trackId}`;
 
-        const response = await fetch(url);
+        const response = await fetchWithRetry(url);
 
         if (!response.ok) {
             return res.status(response.status).json({ error: 'Track fetch failed' });
@@ -261,10 +303,16 @@ app.use(express.static(frontendPath));
 // --- Initialize Database Schema ---
 await initializeDatabaseSchema();
 
-// --- Server Start ---
-app.listen(PORT, () => {
-    console.log(`\n========================================`);
-    console.log(`🚀 Vibebox Backend running on port ${PORT}`);
-    console.log(`Access the backend at http://localhost:${PORT}`);
-    console.log(`========================================\n`);
-});
+// --- Server Start (only for local development) ---
+// In Vercel/serverless, we export the app instead of listening
+if (process.env.VERCEL !== '1') {
+    app.listen(PORT, () => {
+        console.log(`\n========================================`);
+        console.log(`🚀 Vibebox Backend running on port ${PORT}`);
+        console.log(`Access the backend at http://localhost:${PORT}`);
+        console.log(`========================================\n`);
+    });
+}
+
+// Export the app for Vercel serverless deployment
+export default app;
