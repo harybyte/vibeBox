@@ -1,7 +1,3 @@
-// ========================================
-// VERCEL SERVERLESS FUNCTION
-// ========================================
-// This file wraps our Express app to work with Vercel's serverless platform
 
 import app from '../server.js';
 
