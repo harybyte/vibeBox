@@ -1,8 +1,7 @@
 import mysql from 'mysql2/promise';
-import 'dotenv/config'; // Loads environment variables from .env file
+import 'dotenv/config'; 
 
-// --- Configuration Setup ---
-// Uses environment variables for secure, non-hardcoded credentials
+
 const dbConfig = {
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
@@ -10,21 +9,16 @@ const dbConfig = {
     database: process.env.DB_NAME,
 
     // Recommended Pool Settings for Express:
-    waitForConnections: true, // Wait for connections if pool is exhausted
-    connectionLimit: 10,      // Maximum number of connections to create at once
-    queueLimit: 0             // No limit on connection requests queue
+    waitForConnections: true, 
+    connectionLimit: 10,      
+    queueLimit: 0
 };
 
-// Create a connection pool
-// Note: We don't await connection here to allow module loading even if DB is down
+
 const pool = mysql.createPool(dbConfig);
 
 /**
  * Executes a query against the MySQL connection pool.
- * This function is the single point of contact for all SQL operations.
- * @param {string} sql - The SQL query string (with '?' placeholders).
- * @param {Array} [values=[]] - Values to safely escape and insert into the query.
- * @returns {Promise<Array<object>>} The results (or affected rows/insert ID).
  * @throws {Error} If the query fails.
  */
 export async function query(sql, values = []) {
@@ -44,9 +38,9 @@ export async function query(sql, values = []) {
  * @returns {Promise<boolean>} True if successful, False otherwise.
  */
 export async function initializeDatabaseSchema() {
-    console.log("[DB] Checking database schema...");
+   
 
-    // Check if we have credentials
+    // Checking credentials availability
     if (!process.env.DB_HOST || !process.env.DB_USER) {
         console.warn("[DB Warning] Missing DB_HOST or DB_USER. Database features (Playlists) will be disabled.");
         return false;
@@ -71,7 +65,6 @@ export async function initializeDatabaseSchema() {
 
         // Run schema creation
         await query(createPlaylistsTableSQL);
-        console.log("[DB] 'playlists' table verified/created successfully.");
         return true;
     } catch (error) {
         console.error("[DB ERROR] Failed to initialize database schema:", error.message);
